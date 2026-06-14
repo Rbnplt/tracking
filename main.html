@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Muscu · Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #f5f1e8; --bg-card: #ffffff; --ink: #0f0f0e; --ink-soft: #5a5a55;
+  --ink-muted: #908a7e; --line: #e4ddc9;
+  --c-red: #dc2626; --c-red-bg: rgba(220,38,38,0.08);
+  --c-blue: #2563eb; --c-blue-bg: rgba(37,99,235,0.08);
+  --c-green: #16a34a; --c-green-bg: rgba(22,163,74,0.08);
+  --c-yellow: #ca8a04; --c-yellow-bg: rgba(202,138,4,0.08);
+  --accent: #84cc16; --warn: #ea580c;
+  --serif: 'Fraunces', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html, body { background: var(--bg); color: var(--ink); font-family: var(--sans); overflow-x: hidden; }
+body { min-height: 100vh; padding-bottom: calc(20px + var(--safe-bottom)); }
+body::before { content: ''; position: fixed; inset: 0; background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.025) 1px, transparent 0); background-size: 18px 18px; pointer-events: none; z-index: 0; }
+
+.app { max-width: 480px; margin: 0 auto; padding: 16px; position: relative; z-index: 1; }
+
+/* Views */
+.view { display: none; animation: slideIn 0.25s ease; }
+.view.active { display: block; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Top bar */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 20px; }
+.back-btn { background: transparent; border: 1px solid var(--line); padding: 8px 14px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; color: var(--ink); border-radius: 4px; }
+.back-btn:active { background: var(--ink); color: var(--bg-card); }
+
+/* Home */
+.home-header { text-align: center; padding: 30px 0 20px; }
+.home-header h1 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: -0.03em; }
+.home-header h1 .alt { font-style: normal; font-weight: 300; color: var(--ink-soft); }
+.home-header p { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-muted); margin-top: 6px; }
+
+.day-cards { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+.day-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; cursor: pointer; transition: transform 0.15s, border-color 0.15s; position: relative; overflow: hidden; }
+.day-card:active { transform: scale(0.98); }
+.day-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.day-card.red::before { background: var(--c-red); }
+.day-card.blue::before { background: var(--c-blue); }
+.day-card.green::before { background: var(--c-green); }
+.day-card.yellow::before { background: var(--c-yellow); }
+.day-card .short { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-muted); }
+.day-card .name { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 24px; margin-top: 2px; line-height: 1.1; }
+.day-card .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-top: 8px; display: flex; gap: 12px; }
+.day-card .meta span { display: flex; align-items: center; gap: 4px; }
+
+.home-bottom { margin-top: 28px; padding-top: 20px; border-top: 1px dashed var(--line); }
+.home-bottom button { width: 100%; background: var(--bg-card); border: 1px solid var(--line); padding: 14px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); cursor: pointer; border-radius: 8px; margin-bottom: 8px; }
+.home-bottom button:active { background: var(--ink); color: var(--bg-card); }
+
+/* Session detail */
+.session-header { padding: 8px 0 20px; }
+.session-header .eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-muted); }
+.session-header h2 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 32px; line-height: 1.05; margin-top: 4px; letter-spacing: -0.02em; }
+
+.exercise-list { display: flex; flex-direction: column; gap: 8px; }
+.ex-item { background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.ex-item-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.ex-item .name { font-size: 14px; font-weight: 500; flex: 1; }
+.ex-item .target { font-family: var(--mono); font-size: 11px; color: var(--ink-muted); white-space: nowrap; }
+.ex-item .group { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); margin-top: 4px; }
+.ex-item .last { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-top: 6px; }
+
+.btn-primary { width: 100%; background: var(--ink); color: var(--bg-card); border: none; padding: 16px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; border-radius: 8px; margin-top: 20px; font-weight: 600; }
+.btn-primary:active { background: var(--accent); color: var(--ink); }
+.btn-secondary { width: 100%; background: transparent; color: var(--ink); border: 1px solid var(--line); padding: 14px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; border-radius: 8px; margin-top: 8px; }
+.btn-secondary:active { background: var(--ink); color: var(--bg-card); }
+
+/* Active session */
+.session-progress { background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+.session-progress .label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-muted); }
+.session-progress .progress-bar { height: 4px; background: var(--line); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.session-progress .progress-bar-fill { height: 100%; background: var(--accent); transition: width 0.3s; }
+.session-progress .stats { display: flex; justify-content: space-between; margin-top: 8px; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+
+.ex-active { background: var(--bg-card); border: 2px solid var(--ink); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
+.ex-active.done { border-color: var(--accent); border-width: 1px; }
+.ex-active.done .check-badge { display: flex; }
+.ex-active .ex-active-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.ex-active h3 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 20px; line-height: 1.1; }
+.ex-active .meta { font-family: var(--mono); font-size: 10px; color: var(--ink-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+.check-badge { display: none; background: var(--accent); color: var(--ink); width: 24px; height: 24px; border-radius: 12px; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+
+.last-perf { background: var(--bg); border-left: 3px solid var(--accent); padding: 8px 12px; margin-bottom: 12px; border-radius: 4px; }
+.last-perf .lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-muted); }
+.last-perf .val { font-family: var(--mono); font-size: 12px; color: var(--ink); font-weight: 500; }
+
+.sets-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.set-row { display: grid; grid-template-columns: 30px 1fr 1fr 60px; gap: 8px; align-items: center; }
+.set-num { font-family: var(--mono); font-size: 11px; color: var(--ink-muted); text-align: center; font-weight: 500; }
+.set-input { width: 100%; padding: 12px 8px; border: 1px solid var(--line); border-radius: 6px; font-family: var(--mono); font-size: 14px; text-align: center; background: var(--bg); color: var(--ink); }
+.set-input:focus { outline: none; border-color: var(--ink); background: var(--bg-card); }
+.set-input.different-reps { background: rgba(234,88,12,0.1); border-color: var(--warn); }
+
+.set-headers { display: grid; grid-template-columns: 30px 1fr 1fr 60px; gap: 8px; margin-bottom: 6px; }
+.set-headers div { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); text-align: center; }
+
+.rpe-section { padding-top: 12px; border-top: 1px dashed var(--line); }
+.rpe-section .label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 8px; display: block; }
+.rpe-buttons { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.rpe-btn { padding: 10px 0; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
+.rpe-btn.selected { background: var(--ink); color: var(--bg-card); border-color: var(--ink); }
+.rpe-btn.rpe-low { color: var(--c-green); }
+.rpe-btn.rpe-mid { color: var(--warn); }
+.rpe-btn.rpe-high { color: var(--c-red); }
+.rpe-btn.selected.rpe-low { background: var(--c-green); color: var(--bg-card); border-color: var(--c-green); }
+.rpe-btn.selected.rpe-mid { background: var(--warn); color: var(--bg-card); border-color: var(--warn); }
+.rpe-btn.selected.rpe-high { background: var(--c-red); color: var(--bg-card); border-color: var(--c-red); }
+
+.ex-actions { display: flex; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.ex-action-btn { flex: 1; background: transparent; border: 1px solid var(--line); padding: 8px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border-radius: 4px; color: var(--ink-soft); }
+.ex-action-btn:active { background: var(--ink); color: var(--bg-card); }
+.ex-action-btn.danger { color: var(--c-red); }
+.ex-action-btn.validate { background: var(--ink); color: var(--bg-card); border-color: var(--ink); font-weight: 600; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg-card); width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; padding: 24px 20px; border-radius: 16px 16px 0 0; animation: slideUp 0.25s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal h3 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 22px; margin-bottom: 4px; }
+.modal p { color: var(--ink-soft); font-size: 13px; margin-bottom: 16px; }
+.modal-input-group { margin-bottom: 12px; }
+.modal-input-group label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 4px; }
+.modal-input-group input, .modal-input-group select { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 6px; font-family: var(--sans); font-size: 14px; background: var(--bg); }
+.modal-input-group input:focus { outline: none; border-color: var(--ink); background: var(--bg-card); }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+.modal-actions button { flex: 1; padding: 12px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); }
+.modal-actions button.primary { background: var(--ink); color: var(--bg-card); border-color: var(--ink); font-weight: 600; }
+.modal-actions button.danger { background: var(--c-red); color: var(--bg-card); border-color: var(--c-red); }
+
+/* History */
+.history-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer; }
+.history-card:active { transform: scale(0.98); }
+.history-card .ex-name { font-size: 14px; font-weight: 500; }
+.history-card .ex-stats { display: flex; justify-content: space-between; margin-top: 8px; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+.history-card .progression { font-weight: 600; }
+.history-card .progression.up { color: var(--accent); }
+.history-card .progression.down { color: var(--c-red); }
+
+.chart-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-top: 16px; }
+.chart-card h3 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 18px; margin-bottom: 4px; }
+.chart-card .ex-info { font-family: var(--mono); font-size: 10px; color: var(--ink-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+.chart-svg { width: 100%; height: 240px; }
+
+.history-table { width: 100%; margin-top: 16px; border-collapse: collapse; }
+.history-table th { text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); padding: 8px 6px; border-bottom: 1px solid var(--line); }
+.history-table td { padding: 10px 6px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 12px; }
+
+.empty-state { text-align: center; padding: 40px 20px; color: var(--ink-muted); font-size: 13px; }
+
+/* Stats inline */
+.stat-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-family: var(--mono); font-size: 10px; background: var(--bg); color: var(--ink-soft); }
+
+/* Summary */
+.summary-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-top: 16px; }
+.summary-card h3 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 22px; margin-bottom: 12px; }
+.summary-stat { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.summary-stat:last-child { border-bottom: none; }
+.summary-stat .lbl { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+.summary-stat .val { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--ink); }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg-card); padding: 12px 20px; border-radius: 8px; font-family: var(--mono); font-size: 12px; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.toast.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- VIEW: HOME -->
+<div class="view active" id="view-home">
+  <div class="home-header">
+    <h1>Muscu<em class="alt">.</em></h1>
+    <p>Choisis ta séance</p>
+  </div>
+  <div class="day-cards" id="dayCards"></div>
+  <div class="home-bottom">
+    <button onclick="showView('history')">📊 Historique & progression</button>
+    <button onclick="showView('summary')">📋 Résumé hebdomadaire</button>
+  </div>
+</div>
+
+<!-- VIEW: SESSION DETAIL -->
+<div class="view" id="view-session-detail">
+  <div class="topbar">
+    <button class="back-btn" onclick="showView('home')">← Retour</button>
+    <button class="back-btn" onclick="openEditProgram()">⚙ Éditer</button>
+  </div>
+  <div class="session-header">
+    <div class="eyebrow" id="sessionEyebrow">—</div>
+    <h2 id="sessionTitle">—</h2>
+  </div>
+  <div class="exercise-list" id="exerciseList"></div>
+  <button class="btn-primary" onclick="startSession()">▶ Commencer la séance</button>
+</div>
+
+<!-- VIEW: ACTIVE SESSION -->
+<div class="view" id="view-session-active">
+  <div class="topbar">
+    <button class="back-btn" onclick="confirmExitSession()">← Quitter</button>
+    <button class="back-btn" onclick="finishSession()">✓ Terminer</button>
+  </div>
+  <div class="session-progress">
+    <div class="label">En cours · <span id="activeSessionName">—</span></div>
+    <div class="progress-bar"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="stats">
+      <span id="progressText">0 / 0 exercices</span>
+      <span id="elapsedTime">00:00</span>
+    </div>
+  </div>
+  <div id="activeExercises"></div>
+</div>
+
+<!-- VIEW: HISTORY -->
+<div class="view" id="view-history">
+  <div class="topbar">
+    <button class="back-btn" onclick="showView('home')">← Retour</button>
+  </div>
+  <div class="session-header">
+    <div class="eyebrow">Progression</div>
+    <h2>Historique<em style="font-style:normal;color:var(--ink-soft);font-weight:300;">.</em></h2>
+  </div>
+  <div id="historyContent"></div>
+</div>
+
+<!-- VIEW: EXERCISE HISTORY (graph) -->
+<div class="view" id="view-exercise-history">
+  <div class="topbar">
+    <button class="back-btn" onclick="showView('history')">← Retour</button>
+  </div>
+  <div id="exerciseHistoryContent"></div>
+</div>
+
+<!-- VIEW: SUMMARY -->
+<div class="view" id="view-summary">
+  <div class="topbar">
+    <button class="back-btn" onclick="showView('home')">← Retour</button>
+  </div>
+  <div class="session-header">
+    <div class="eyebrow">Semaine en cours</div>
+    <h2>Résumé<em style="font-style:normal;color:var(--ink-soft);font-weight:300;">.</em></h2>
+  </div>
+  <div id="summaryContent"></div>
+</div>
+
+</div>
+
+<!-- MODAL: Edit Exercise -->
+<div class="modal-overlay" id="modalEditExercise">
+  <div class="modal">
+    <h3>Modifier l'exercice</h3>
+    <p>Modifie pour cette séance uniquement, ou enregistre dans le programme.</p>
+    <div class="modal-input-group">
+      <label>Nom de l'exercice</label>
+      <input type="text" id="editExName">
+    </div>
+    <div class="modal-input-group">
+      <label>Nombre de séries</label>
+      <input type="number" id="editExSets" min="1" max="10">
+    </div>
+    <div class="modal-input-group">
+      <label>Reps cible (ex: 8, 6-8, 12, échec)</label>
+      <input type="text" id="editExReps">
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeModal('modalEditExercise')">Annuler</button>
+      <button onclick="saveExerciseEdit(false)">Cette séance</button>
+      <button class="primary" onclick="saveExerciseEdit(true)">Permanent</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Program -->
+<div class="modal-overlay" id="modalEditProgram">
+  <div class="modal">
+    <h3>Éditer le programme</h3>
+    <p>Modifie, supprime ou réordonne les exercices.</p>
+    <div id="editProgramList"></div>
+    <button onclick="openAddExercise()" style="width:100%; margin-top:12px; padding:12px; background:transparent; border:1px dashed var(--line); border-radius:6px; font-family:var(--mono); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; color:var(--ink-muted);">+ Ajouter un exercice</button>
+    <div class="modal-actions">
+      <button onclick="closeModal('modalEditProgram')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Exercise -->
+<div class="modal-overlay" id="modalAddExercise">
+  <div class="modal">
+    <h3>Ajouter un exercice</h3>
+    <div class="modal-input-group">
+      <label>Nom</label>
+      <input type="text" id="addExName" placeholder="Ex: Crunch lesté">
+    </div>
+    <div class="modal-input-group">
+      <label>Groupe musculaire</label>
+      <input type="text" id="addExGroup" placeholder="Ex: Abdos">
+    </div>
+    <div class="modal-input-group">
+      <label>Nombre de séries</label>
+      <input type="number" id="addExSets" value="3" min="1">
+    </div>
+    <div class="modal-input-group">
+      <label>Reps cible</label>
+      <input type="text" id="addExReps" value="10" placeholder="8 ou 6-8">
+    </div>
+    <div class="modal-input-group">
+      <label>Permanent ou pour cette séance ?</label>
+      <select id="addExScope">
+        <option value="session">Cette séance uniquement</option>
+        <option value="permanent">Permanent (sauvegardé)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeModal('modalAddExercise')">Annuler</button>
+      <button class="primary" onclick="saveNewExercise()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Confirm -->
+<div class="modal-overlay" id="modalConfirm">
+  <div class="modal">
+    <h3 id="confirmTitle">Confirmer</h3>
+    <p id="confirmText">—</p>
+    <div class="modal-actions">
+      <button onclick="closeModal('modalConfirm')">Annuler</button>
+      <button class="danger" id="confirmBtn">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DEFAULT PROGRAMS
+// ============================================================
+const DEFAULT_PROGRAMS = {
+  pectoraux: {
+    id: 'pectoraux', name: 'Pecs · Triceps · Biceps', short: 'Jour 1', color: 'red',
+    exercises: [
+      { id: 'dc_halteres', name: 'DC haltères', sets: 4, repsRange: '6-8', group: 'Pecs' },
+      { id: 'dc_incline_h', name: 'DC incliné haltères', sets: 4, repsRange: '8', group: 'Pecs' },
+      { id: 'ecarte', name: 'Écarté poulie ou butterfly', sets: 3, repsRange: '12', group: 'Pecs' },
+      { id: 'skull_crusher', name: 'Skull crusher', sets: 3, repsRange: '8', group: 'Triceps' },
+      { id: 'ext_triceps_poulie', name: 'Extension triceps poulie', sets: 4, repsRange: '10', group: 'Triceps' },
+      { id: 'dips', name: 'Dips', sets: 3, repsRange: 'échec', group: 'Triceps' },
+      { id: 'curl_barre', name: 'Curl barre', sets: 4, repsRange: '8', group: 'Biceps' },
+      { id: 'curl_pupitre', name: 'Curl pupitre', sets: 3, repsRange: '10', group: 'Biceps' },
+      { id: 'curl_marteau', name: 'Curl marteau', sets: 3, repsRange: '10', group: 'Biceps' },
+      { id: 'ext_poignets', name: 'Extension poignets', sets: 3, repsRange: '8', group: 'Avant-bras' },
+      { id: 'curl_poignets', name: 'Curl poignets', sets: 4, repsRange: '8', group: 'Avant-bras' },
+    ]
+  },
+  dos: {
+    id: 'dos', name: 'Dos · Épaules', short: 'Jour 2', color: 'blue',
+    exercises: [
+      { id: 'tractions', name: 'Tractions (échauffement)', sets: 4, repsRange: 'max', group: 'Dos' },
+      { id: 'rowing_barre', name: 'Rowing barre', sets: 4, repsRange: '6', group: 'Dos' },
+      { id: 'lat_pulldown', name: 'Lat pulldown', sets: 4, repsRange: '8', group: 'Dos' },
+      { id: 'seated_row_uni', name: 'Seated row unilatéral', sets: 4, repsRange: '10', group: 'Dos' },
+      { id: 'pullover', name: 'Pull-over machine', sets: 3, repsRange: '10', group: 'Dos' },
+      { id: 'dvp_militaire', name: 'Développé militaire libre', sets: 4, repsRange: '6-8', group: 'Épaules' },
+      { id: 'elev_lat', name: 'Élévations latérales', sets: 4, repsRange: '12', group: 'Épaules' },
+      { id: 'face_pull', name: 'Face pull', sets: 3, repsRange: '15', group: 'Épaules' },
+      { id: 'rear_delt', name: 'Rear delt', sets: 3, repsRange: '12', group: 'Épaules' },
+    ]
+  },
+  jambes: {
+    id: 'jambes', name: 'Jambes · Fessiers', short: 'Jour 3', color: 'green',
+    exercises: [
+      { id: 'squat', name: 'Squat barre', sets: 4, repsRange: '6', group: 'Quadriceps' },
+      { id: 'sdt_roumain', name: 'Soulevé de terre roumain', sets: 4, repsRange: '6', group: 'Postérieur' },
+      { id: 'hip_thrust', name: 'Hip thrust barre libre', sets: 4, repsRange: '8', group: 'Fessiers' },
+      { id: 'presse', name: 'Presse à cuisses', sets: 3, repsRange: '10', group: 'Quadriceps' },
+      { id: 'bulgarian', name: 'Bulgarian squat', sets: 3, repsRange: '8/jambe', group: 'Quadriceps' },
+      { id: 'leg_curl', name: 'Leg curl', sets: 3, repsRange: '12', group: 'Ischios' },
+      { id: 'machine_add', name: 'Machine adducteurs', sets: 4, repsRange: '12-15', group: 'Adducteurs' },
+      { id: 'copenhagen', name: 'Copenhagen plank', sets: 3, repsRange: '30s/côté', group: 'Adducteurs' },
+      { id: 'mollets', name: 'Mollets debout', sets: 4, repsRange: '12', group: 'Mollets' },
+    ]
+  },
+  abdos: {
+    id: 'abdos', name: 'Abdos · Tronc', short: 'Bonus', color: 'yellow',
+    exercises: [
+      { id: 'hanging_legs', name: 'Relevés jambes pendus', sets: 4, repsRange: '8-12', group: 'Abdos bas' },
+      { id: 'ab_wheel', name: 'Ab wheel rollout', sets: 3, repsRange: '8-12', group: 'Anti-extension' },
+      { id: 'crunchs_lestes', name: 'Crunchs lestés', sets: 3, repsRange: '12', group: 'Abdos haut' },
+      { id: 'russian_twists', name: 'Russian twists lestés', sets: 3, repsRange: '15/côté', group: 'Rotation' },
+      { id: 'woodchopper', name: 'Cable woodchopper', sets: 3, repsRange: '10/côté', group: 'Rotation' },
+      { id: 'pallof', name: 'Pallof press', sets: 3, repsRange: '10/côté', group: 'Anti-rotation' },
+      { id: 'planche_front', name: 'Planche frontale', sets: 3, repsRange: '45s', group: 'Gainage' },
+      { id: 'planche_lat', name: 'Planche latérale', sets: 3, repsRange: '45s/côté', group: 'Gainage' },
+    ]
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+const STORAGE_KEY = 'muscu_tracker_v1';
+let state = {
+  programs: JSON.parse(JSON.stringify(DEFAULT_PROGRAMS)),
+  history: {}, // {programId: [{date, exercises: [{exId, sets:[{weight,reps,wasDifferent}], rpe}]}]}
+  currentSession: null, // active session
+  currentProgramId: null,
+  editingExerciseId: null,
+};
+
+function load() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+      // Merge any new default programs that don't exist
+      for (const id of Object.keys(DEFAULT_PROGRAMS)) {
+        if (!state.programs[id]) state.programs[id] = JSON.parse(JSON.stringify(DEFAULT_PROGRAMS[id]));
+      }
+    }
+  } catch(e) { console.warn('Load failed', e); }
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e) { console.warn('Save failed', e); }
+}
+
+// ============================================================
+// VIEWS
+// ============================================================
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(`view-${name}`).classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'home') renderHome();
+  if (name === 'history') renderHistory();
+  if (name === 'summary') renderSummary();
+}
+
+// ============================================================
+// HOME
+// ============================================================
+function renderHome() {
+  const container = document.getElementById('dayCards');
+  container.innerHTML = Object.values(state.programs).map(p => {
+    const lastSession = getLastSession(p.id);
+    const lastDate = lastSession ? formatRelativeDate(lastSession.date) : 'jamais';
+    return `
+      <div class="day-card ${p.color}" onclick="openSession('${p.id}')">
+        <div class="short">${p.short}</div>
+        <div class="name">${p.name}</div>
+        <div class="meta">
+          <span>📋 ${p.exercises.length} exercices</span>
+          <span>🕐 dernière: ${lastDate}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function formatRelativeDate(iso) {
+  const days = Math.floor((Date.now() - new Date(iso)) / 86400000);
+  if (days === 0) return "aujourd'hui";
+  if (days === 1) return "hier";
+  if (days < 7) return `il y a ${days}j`;
+  if (days < 30) return `il y a ${Math.floor(days/7)}sem`;
+  return `il y a ${Math.floor(days/30)}m`;
+}
+
+function getLastSession(programId) {
+  const sessions = state.history[programId] || [];
+  return sessions.length > 0 ? sessions[sessions.length - 1] : null;
+}
+
+// ============================================================
+// SESSION DETAIL
+// ============================================================
+function openSession(programId) {
+  state.currentProgramId = programId;
+  const program = state.programs[programId];
+  document.getElementById('sessionEyebrow').textContent = program.short.toUpperCase();
+  document.getElementById('sessionTitle').textContent = program.name;
+  renderExerciseList();
+  showView('session-detail');
+}
+
+function renderExerciseList() {
+  const program = state.programs[state.currentProgramId];
+  const container = document.getElementById('exerciseList');
+  container.innerHTML = program.exercises.map(ex => {
+    const lastPerf = getLastPerformance(state.currentProgramId, ex.id);
+    return `
+      <div class="ex-item">
+        <div class="ex-item-row">
+          <div>
+            <div class="name">${ex.name}</div>
+            <div class="group">${ex.group}</div>
+          </div>
+          <div class="target">${ex.sets}×${ex.repsRange}</div>
+        </div>
+        ${lastPerf ? `<div class="last">Dernière fois : ${lastPerf}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function getLastPerformance(programId, exId) {
+  const sessions = state.history[programId] || [];
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const ex = sessions[i].exercises.find(e => e.exId === exId);
+    if (ex && ex.sets && ex.sets.length > 0) {
+      const validSet = ex.sets.find(s => s.weight !== null && s.weight !== '');
+      if (validSet) {
+        return `${validSet.weight}kg · RPE ${ex.rpe || '-'}`;
+      }
+    }
+  }
+  return null;
+}
+
+// ============================================================
+// ACTIVE SESSION
+// ============================================================
+let sessionStartTime = null;
+let elapsedInterval = null;
+
+function startSession() {
+  const program = state.programs[state.currentProgramId];
+  state.currentSession = {
+    programId: program.id,
+    startedAt: new Date().toISOString(),
+    exercises: program.exercises.map(ex => ({
+      exId: ex.id,
+      name: ex.name,
+      sets: ex.sets,
+      repsRange: ex.repsRange,
+      group: ex.group,
+      done: false,
+      data: Array(ex.sets).fill(null).map(() => ({ weight: '', reps: '' })),
+      rpe: null
+    }))
+  };
+  sessionStartTime = Date.now();
+  startElapsedTimer();
+  document.getElementById('activeSessionName').textContent = program.name;
+  renderActiveSession();
+  showView('session-active');
+}
+
+function startElapsedTimer() {
+  if (elapsedInterval) clearInterval(elapsedInterval);
+  elapsedInterval = setInterval(() => {
+    if (!sessionStartTime) return;
+    const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const s = (elapsed % 60).toString().padStart(2, '0');
+    document.getElementById('elapsedTime').textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+function renderActiveSession() {
+  const session = state.currentSession;
+  const container = document.getElementById('activeExercises');
+  const doneCount = session.exercises.filter(e => e.done).length;
+  document.getElementById('progressText').textContent = `${doneCount} / ${session.exercises.length} exercices`;
+  document.getElementById('progressFill').style.width = `${(doneCount / session.exercises.length) * 100}%`;
+
+  container.innerHTML = session.exercises.map((ex, idx) => {
+    const program = state.programs[session.programId];
+    const programEx = program.exercises.find(e => e.id === ex.exId);
+    const expectedReps = parseExpectedReps(ex.repsRange);
+    return `
+      <div class="ex-active ${ex.done ? 'done' : ''}" id="ex-active-${idx}">
+        <div class="ex-active-header">
+          <div>
+            <h3>${ex.name}</h3>
+            <div class="meta">${ex.sets}×${ex.repsRange} · ${ex.group}</div>
+          </div>
+          <div class="check-badge">✓</div>
+        </div>
+        ${renderLastPerf(session.programId, ex.exId)}
+        <div class="set-headers">
+          <div>#</div>
+          <div>Poids (kg)</div>
+          <div>Reps</div>
+          <div></div>
+        </div>
+        <div class="sets-list">
+          ${Array(ex.sets).fill().map((_, i) => `
+            <div class="set-row">
+              <div class="set-num">${i+1}</div>
+              <input type="number" inputmode="decimal" step="0.5" class="set-input"
+                value="${ex.data[i]?.weight || ''}"
+                placeholder="—"
+                onchange="updateSet(${idx}, ${i}, 'weight', this.value)">
+              <input type="number" inputmode="numeric" class="set-input ${ex.data[i]?.reps && expectedReps && ex.data[i].reps != expectedReps ? 'different-reps' : ''}"
+                value="${ex.data[i]?.reps || ''}"
+                placeholder="${ex.repsRange}"
+                onchange="updateSet(${idx}, ${i}, 'reps', this.value)">
+              <div></div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="rpe-section">
+          <span class="label">RPE — Difficulté ressentie</span>
+          <div class="rpe-buttons">
+            ${[3,4,5,6,7,8,9,10].map(n => `
+              <button class="rpe-btn ${n <= 5 ? 'rpe-low' : n <= 7 ? 'rpe-mid' : 'rpe-high'} ${ex.rpe === n ? 'selected' : ''}"
+                onclick="setRPE(${idx}, ${n})">${n}</button>
+            `).join('')}
+          </div>
+        </div>
+        <div class="ex-actions">
+          <button class="ex-action-btn" onclick="editExerciseInSession(${idx})">✏ Modifier</button>
+          <button class="ex-action-btn danger" onclick="skipExercise(${idx})">⊘ Skip</button>
+          <button class="ex-action-btn validate" onclick="toggleDone(${idx})">${ex.done ? '↻ Reprendre' : '✓ Valider'}</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderLastPerf(programId, exId) {
+  const sessions = state.history[programId] || [];
+  for (let i = sessions.length - 1; i >= 0; i--) {
+    const ex = sessions[i].exercises.find(e => e.exId === exId);
+    if (ex && ex.sets) {
+      const validSet = ex.sets.find(s => s.weight !== null && s.weight !== '');
+      if (validSet) {
+        return `<div class="last-perf">
+          <div class="lbl">Dernière séance · ${formatRelativeDate(sessions[i].date)}</div>
+          <div class="val">${validSet.weight}kg × ${validSet.reps || '?'} · RPE ${ex.rpe || '-'}</div>
+        </div>`;
+      }
+    }
+  }
+  return '';
+}
+
+function parseExpectedReps(range) {
+  if (!range) return null;
+  const m = range.toString().match(/^(\d+)/);
+  return m ? parseInt(m[1]) : null;
+}
+
+function updateSet(exIdx, setIdx, field, value) {
+  const ex = state.currentSession.exercises[exIdx];
+  if (!ex.data[setIdx]) ex.data[setIdx] = { weight: '', reps: '' };
+  ex.data[setIdx][field] = value;
+
+  // Visual feedback for different reps
+  if (field === 'reps') {
+    const expected = parseExpectedReps(ex.repsRange);
+    const input = document.querySelectorAll(`#ex-active-${exIdx} .set-row`)[setIdx].children[2];
+    if (expected && value && parseInt(value) !== expected) {
+      input.classList.add('different-reps');
+    } else {
+      input.classList.remove('different-reps');
+    }
+  }
+}
+
+function setRPE(exIdx, rpe) {
+  state.currentSession.exercises[exIdx].rpe = rpe;
+  renderActiveSession();
+}
+
+function toggleDone(exIdx) {
+  const ex = state.currentSession.exercises[exIdx];
+  ex.done = !ex.done;
+  renderActiveSession();
+  // Scroll to next exercise if just validated
+  if (ex.done) {
+    setTimeout(() => {
+      const next = document.querySelector(`#ex-active-${exIdx + 1}`);
+      if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+}
+
+function skipExercise(exIdx) {
+  if (!confirm('Sauter cet exercice ? Il ne sera pas enregistré.')) return;
+  state.currentSession.exercises.splice(exIdx, 1);
+  renderActiveSession();
+}
+
+function confirmExitSession() {
+  if (confirm('Quitter la séance sans sauvegarder ?')) {
+    state.currentSession = null;
+    if (elapsedInterval) clearInterval(elapsedInterval);
+    showView('home');
+  }
+}
+
+function finishSession() {
+  const session = state.currentSession;
+  if (!session) return;
+
+  // Build session record
+  const sessionRecord = {
+    date: session.startedAt,
+    duration: Math.floor((Date.now() - sessionStartTime) / 1000),
+    exercises: session.exercises.map(ex => ({
+      exId: ex.exId,
+      name: ex.name,
+      sets: ex.data.filter(d => d.weight !== '' || d.reps !== ''),
+      rpe: ex.rpe,
+      done: ex.done
+    })).filter(ex => ex.sets.length > 0 || ex.done)
+  };
+
+  // Save
+  if (!state.history[session.programId]) state.history[session.programId] = [];
+  state.history[session.programId].push(sessionRecord);
+  state.currentSession = null;
+  if (elapsedInterval) clearInterval(elapsedInterval);
+  save();
+  showToast('✓ Séance enregistrée');
+  setTimeout(() => showView('home'), 500);
+}
+
+// ============================================================
+// EDIT EXERCISE
+// ============================================================
+function editExerciseInSession(exIdx) {
+  state.editingExerciseId = exIdx;
+  state.editingScope = 'session';
+  const ex = state.currentSession.exercises[exIdx];
+  document.getElementById('editExName').value = ex.name;
+  document.getElementById('editExSets').value = ex.sets;
+  document.getElementById('editExReps').value = ex.repsRange;
+  openModal('modalEditExercise');
+}
+
+function saveExerciseEdit(permanent) {
+  const idx = state.editingExerciseId;
+  const newName = document.getElementById('editExName').value.trim();
+  const newSets = parseInt(document.getElementById('editExSets').value);
+  const newReps = document.getElementById('editExReps').value.trim();
+  if (!newName || !newSets || !newReps) { alert('Tous les champs requis'); return; }
+
+  // Update in session
+  if (state.currentSession && state.currentSession.exercises[idx]) {
+    const ex = state.currentSession.exercises[idx];
+    ex.name = newName;
+    ex.repsRange = newReps;
+    // Adjust sets array
+    if (newSets > ex.data.length) {
+      while (ex.data.length < newSets) ex.data.push({ weight: '', reps: '' });
+    } else if (newSets < ex.data.length) {
+      ex.data = ex.data.slice(0, newSets);
+    }
+    ex.sets = newSets;
+  }
+
+  // Update permanently if requested
+  if (permanent && state.currentSession) {
+    const program = state.programs[state.currentSession.programId];
+    const exId = state.currentSession.exercises[idx].exId;
+    const programEx = program.exercises.find(e => e.id === exId);
+    if (programEx) {
+      programEx.name = newName;
+      programEx.sets = newSets;
+      programEx.repsRange = newReps;
+    }
+    save();
+    showToast('✓ Modifications enregistrées');
+  } else {
+    showToast('✓ Modifié pour cette séance');
+  }
+
+  renderActiveSession();
+  closeModal('modalEditExercise');
+}
+
+// ============================================================
+// EDIT PROGRAM (full)
+// ============================================================
+function openEditProgram() {
+  renderEditProgramList();
+  openModal('modalEditProgram');
+}
+
+function renderEditProgramList() {
+  const program = state.programs[state.currentProgramId];
+  const container = document.getElementById('editProgramList');
+  container.innerHTML = program.exercises.map((ex, idx) => `
+    <div style="background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <div style="font-weight:500; font-size:14px;">${ex.name}</div>
+        <button onclick="deleteProgramExercise(${idx})" style="background:transparent; border:none; color:var(--c-red); font-family:var(--mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer;">Suppr</button>
+      </div>
+      <div style="font-family:var(--mono); font-size:11px; color:var(--ink-muted);">${ex.sets}×${ex.repsRange} · ${ex.group}</div>
+      <div style="display:flex; gap:4px; margin-top:8px;">
+        <button onclick="moveExercise(${idx}, -1)" style="flex:1; padding:6px; background:var(--bg-card); border:1px solid var(--line); border-radius:4px; font-family:var(--mono); font-size:10px; cursor:pointer;">↑</button>
+        <button onclick="moveExercise(${idx}, 1)" style="flex:1; padding:6px; background:var(--bg-card); border:1px solid var(--line); border-radius:4px; font-family:var(--mono); font-size:10px; cursor:pointer;">↓</button>
+        <button onclick="editProgramExercise(${idx})" style="flex:1; padding:6px; background:var(--bg-card); border:1px solid var(--line); border-radius:4px; font-family:var(--mono); font-size:10px; cursor:pointer;">Éditer</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteProgramExercise(idx) {
+  if (!confirm('Supprimer cet exercice du programme ?')) return;
+  const program = state.programs[state.currentProgramId];
+  program.exercises.splice(idx, 1);
+  save();
+  renderEditProgramList();
+  renderExerciseList();
+  showToast('✓ Supprimé');
+}
+
+function moveExercise(idx, dir) {
+  const program = state.programs[state.currentProgramId];
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= program.exercises.length) return;
+  [program.exercises[idx], program.exercises[newIdx]] = [program.exercises[newIdx], program.exercises[idx]];
+  save();
+  renderEditProgramList();
+  renderExerciseList();
+}
+
+function editProgramExercise(idx) {
+  const program = state.programs[state.currentProgramId];
+  const ex = program.exercises[idx];
+  state.editingExerciseId = idx;
+  state.editingPermanent = true;
+  document.getElementById('editExName').value = ex.name;
+  document.getElementById('editExSets').value = ex.sets;
+  document.getElementById('editExReps').value = ex.repsRange;
+  closeModal('modalEditProgram');
+  openModal('modalEditExercise');
+  // Override save behavior for this case
+  window._editingProgramOnly = true;
+}
+
+function openAddExercise() {
+  document.getElementById('addExName').value = '';
+  document.getElementById('addExGroup').value = '';
+  document.getElementById('addExSets').value = 3;
+  document.getElementById('addExReps').value = '10';
+  closeModal('modalEditProgram');
+  openModal('modalAddExercise');
+}
+
+function saveNewExercise() {
+  const name = document.getElementById('addExName').value.trim();
+  const group = document.getElementById('addExGroup').value.trim() || 'Divers';
+  const sets = parseInt(document.getElementById('addExSets').value);
+  const reps = document.getElementById('addExReps').value.trim();
+  const scope = document.getElementById('addExScope').value;
+
+  if (!name || !sets || !reps) { alert('Tous les champs requis'); return; }
+
+  const newEx = {
+    id: 'custom_' + Date.now(),
+    name, group, sets, repsRange: reps
+  };
+
+  if (scope === 'permanent') {
+    state.programs[state.currentProgramId].exercises.push(newEx);
+    save();
+    showToast('✓ Ajouté au programme');
+  } else if (state.currentSession) {
+    state.currentSession.exercises.push({
+      ...newEx,
+      done: false,
+      data: Array(sets).fill(null).map(() => ({ weight: '', reps: '' })),
+      rpe: null
+    });
+    renderActiveSession();
+    showToast('✓ Ajouté à la séance');
+  } else {
+    // Add to session-only would need active session; default to permanent
+    state.programs[state.currentProgramId].exercises.push(newEx);
+    save();
+    showToast('✓ Ajouté au programme');
+  }
+  renderExerciseList();
+  closeModal('modalAddExercise');
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function renderHistory() {
+  const container = document.getElementById('historyContent');
+  const allExercises = new Map();
+
+  // Collect all exercises with their last performance
+  for (const programId of Object.keys(state.history)) {
+    const sessions = state.history[programId];
+    for (const session of sessions) {
+      for (const ex of session.exercises) {
+        if (!allExercises.has(ex.exId)) {
+          allExercises.set(ex.exId, { exId: ex.exId, name: ex.name, programId, sessions: [] });
+        }
+        allExercises.get(ex.exId).sessions.push({ date: session.date, sets: ex.sets, rpe: ex.rpe });
+      }
+    }
+  }
+
+  if (allExercises.size === 0) {
+    container.innerHTML = '<div class="empty-state">Aucune séance enregistrée pour le moment.<br>Termine ta première séance pour voir l\'historique.</div>';
+    return;
+  }
+
+  const cards = Array.from(allExercises.values()).map(ex => {
+    const sorted = ex.sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const latest = sorted[0];
+    const previous = sorted[1];
+    const maxWeightLatest = Math.max(...latest.sets.filter(s => s.weight).map(s => parseFloat(s.weight) || 0));
+    const maxWeightPrev = previous ? Math.max(...previous.sets.filter(s => s.weight).map(s => parseFloat(s.weight) || 0)) : null;
+    const diff = maxWeightPrev !== null ? maxWeightLatest - maxWeightPrev : 0;
+
+    return `
+      <div class="history-card" onclick="showExerciseHistory('${ex.exId}', '${ex.programId}')">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-stats">
+          <span>${maxWeightLatest}kg · ${sorted.length} séance${sorted.length > 1 ? 's' : ''}</span>
+          ${maxWeightPrev !== null ? `<span class="progression ${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}kg</span>` : '<span class="stat-pill">Nouveau</span>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = cards;
+}
+
+function showExerciseHistory(exId, programId) {
+  const container = document.getElementById('exerciseHistoryContent');
+  const sessions = (state.history[programId] || [])
+    .filter(s => s.exercises.find(e => e.exId === exId))
+    .map(s => ({
+      date: s.date,
+      ...s.exercises.find(e => e.exId === exId)
+    }))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (sessions.length === 0) { container.innerHTML = '<div class="empty-state">Pas de données.</div>'; return; }
+
+  const exName = sessions[0].name;
+
+  // Compute graph data
+  const points = sessions.map(s => {
+    const weights = s.sets.filter(x => x.weight).map(x => parseFloat(x.weight));
+    return {
+      date: new Date(s.date),
+      maxWeight: weights.length ? Math.max(...weights) : 0,
+      avgWeight: weights.length ? weights.reduce((a,b) => a+b, 0) / weights.length : 0,
+      rpe: s.rpe
+    };
+  });
+
+  container.innerHTML = `
+    <div class="session-header">
+      <div class="eyebrow">Progression</div>
+      <h2 style="font-size:26px;">${exName}</h2>
+    </div>
+    <div class="chart-card">
+      <h3>Charge max par séance</h3>
+      <div class="ex-info">${sessions.length} séance${sessions.length > 1 ? 's' : ''} enregistrée${sessions.length > 1 ? 's' : ''}</div>
+      ${renderProgressChart(points)}
+    </div>
+    <div class="chart-card">
+      <h3>Historique détaillé</h3>
+      <table class="history-table">
+        <thead><tr><th>Date</th><th>Max</th><th>Sets</th><th>RPE</th></tr></thead>
+        <tbody>
+          ${sessions.slice().reverse().map(s => {
+            const weights = s.sets.filter(x => x.weight).map(x => parseFloat(x.weight));
+            const max = weights.length ? Math.max(...weights) : '-';
+            return `<tr>
+              <td>${formatDateShort(s.date)}</td>
+              <td>${max}kg</td>
+              <td>${s.sets.length}</td>
+              <td>${s.rpe || '-'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  showView('exercise-history');
+}
+
+function formatDateShort(iso) {
+  const d = new Date(iso);
+  return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
+}
+
+function renderProgressChart(points) {
+  if (points.length === 0) return '<div class="empty-state">—</div>';
+  const W = 380, H = 220, pad = { top: 20, right: 15, bottom: 30, left: 35 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  const xMin = points[0].date.getTime();
+  const xMax = points.length > 1 ? points[points.length-1].date.getTime() : xMin + 86400000;
+  const xRange = Math.max(1, xMax - xMin);
+  const yVals = points.map(p => p.maxWeight);
+  const yMin = Math.max(0, Math.floor(Math.min(...yVals) - 2));
+  const yMax = Math.ceil(Math.max(...yVals) + 2);
+
+  const xToPx = t => pad.left + ((t - xMin) / xRange) * plotW;
+  const yToPx = w => pad.top + ((yMax - w) / (yMax - yMin)) * plotH;
+
+  let svg = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+
+  // Y grid lines
+  const yStep = (yMax - yMin) > 20 ? 10 : (yMax - yMin) > 10 ? 5 : 2;
+  for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep) {
+    const py = yToPx(y);
+    svg += `<line x1="${pad.left}" y1="${py}" x2="${W - pad.right}" y2="${py}" stroke="var(--line)" stroke-dasharray="2 4"/>`;
+    svg += `<text x="${pad.left - 6}" y="${py + 3}" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-muted)">${y}</text>`;
+  }
+
+  // Data line
+  if (points.length > 1) {
+    const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xToPx(p.date.getTime())} ${yToPx(p.maxWeight)}`).join(' ');
+    svg += `<path d="${path}" stroke="var(--ink)" stroke-width="2" fill="none"/>`;
+  }
+
+  // Data points
+  points.forEach((p, i) => {
+    const px = xToPx(p.date.getTime());
+    const py = yToPx(p.maxWeight);
+    svg += `<circle cx="${px}" cy="${py}" r="4" fill="var(--ink)" stroke="var(--bg-card)" stroke-width="2"/>`;
+    if (i === points.length - 1 || i === 0 || points.length <= 5) {
+      svg += `<text x="${px}" y="${py - 8}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="600" fill="var(--accent)">${p.maxWeight}kg</text>`;
+    }
+  });
+
+  // X axis labels
+  if (points.length <= 6) {
+    points.forEach(p => {
+      const px = xToPx(p.date.getTime());
+      svg += `<text x="${px}" y="${H - pad.bottom + 14}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink-muted)">${formatDateShort(p.date.toISOString())}</text>`;
+    });
+  } else {
+    svg += `<text x="${pad.left}" y="${H - pad.bottom + 14}" text-anchor="start" font-family="JetBrains Mono" font-size="9" fill="var(--ink-muted)">${formatDateShort(points[0].date.toISOString())}</text>`;
+    svg += `<text x="${W - pad.right}" y="${H - pad.bottom + 14}" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="var(--ink-muted)">${formatDateShort(points[points.length-1].date.toISOString())}</text>`;
+  }
+
+  // Axes
+  svg += `<line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${H - pad.bottom}" stroke="var(--ink)" stroke-width="1"/>`;
+  svg += `<line x1="${pad.left}" y1="${H - pad.bottom}" x2="${W - pad.right}" y2="${H - pad.bottom}" stroke="var(--ink)" stroke-width="1"/>`;
+
+  svg += '</svg>';
+  return svg;
+}
+
+// ============================================================
+// SUMMARY (weekly)
+// ============================================================
+function renderSummary() {
+  const container = document.getElementById('summaryContent');
+  const now = Date.now();
+  const weekAgo = now - 7 * 86400000;
+
+  const recentSessions = [];
+  for (const programId of Object.keys(state.history)) {
+    for (const session of state.history[programId]) {
+      if (new Date(session.date).getTime() >= weekAgo) {
+        recentSessions.push({ ...session, programId });
+      }
+    }
+  }
+
+  if (recentSessions.length === 0) {
+    container.innerHTML = '<div class="empty-state">Aucune séance cette semaine.</div>';
+    return;
+  }
+
+  // Group volume calculation
+  const groupVolume = {};
+  let totalSets = 0;
+  let totalDuration = 0;
+  let totalReps = 0;
+  let totalWeight = 0;
+
+  for (const session of recentSessions) {
+    totalDuration += session.duration || 0;
+    for (const ex of session.exercises) {
+      const program = state.programs[session.programId];
+      const programEx = program?.exercises.find(e => e.id === ex.exId);
+      const group = programEx?.group || 'Divers';
+      groupVolume[group] = (groupVolume[group] || 0) + ex.sets.length;
+      totalSets += ex.sets.length;
+      for (const s of ex.sets) {
+        if (s.weight && s.reps) {
+          totalReps += parseInt(s.reps) || 0;
+          totalWeight += (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0);
+        }
+      }
+    }
+  }
+
+  container.innerHTML = `
+    <div class="summary-card">
+      <h3>Vue d'ensemble</h3>
+      <div class="summary-stat"><span class="lbl">Séances</span><span class="val">${recentSessions.length}</span></div>
+      <div class="summary-stat"><span class="lbl">Durée totale</span><span class="val">${Math.floor(totalDuration / 60)} min</span></div>
+      <div class="summary-stat"><span class="lbl">Séries totales</span><span class="val">${totalSets}</span></div>
+      <div class="summary-stat"><span class="lbl">Reps totales</span><span class="val">${totalReps}</span></div>
+      <div class="summary-stat"><span class="lbl">Tonnage</span><span class="val">${Math.round(totalWeight)} kg</span></div>
+    </div>
+    <div class="summary-card">
+      <h3>Volume par groupe</h3>
+      ${Object.entries(groupVolume).sort((a,b) => b[1] - a[1]).map(([group, sets]) => `
+        <div class="summary-stat">
+          <span class="lbl">${group}</span>
+          <span class="val">${sets} séries</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2000);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+load();
+renderHome();
+</script>
+
+</body>
+</html>
