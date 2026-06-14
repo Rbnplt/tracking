@@ -16,7 +16,7 @@
   --c-blue: #2563eb; --c-blue-bg: rgba(37,99,235,0.08);
   --c-green: #16a34a; --c-green-bg: rgba(22,163,74,0.08);
   --c-yellow: #ca8a04; --c-yellow-bg: rgba(202,138,4,0.08);
-  --accent: #84cc16; --warn: #ea580c;
+  --accent: #84cc16; --accent-dark: #4d7c0f; --warn: #ea580c;
   --serif: 'Fraunces', Georgia, serif;
   --sans: 'DM Sans', system-ui, sans-serif;
   --mono: 'JetBrains Mono', monospace;
@@ -97,6 +97,10 @@ body::before { content: ''; position: fixed; inset: 0; background-image: radial-
 .last-perf { background: var(--bg); border-left: 3px solid var(--accent); padding: 8px 12px; margin-bottom: 12px; border-radius: 4px; }
 .last-perf .lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-muted); }
 .last-perf .val { font-family: var(--mono); font-size: 12px; color: var(--ink); font-weight: 500; }
+
+.suggestion-banner { background: rgba(132,204,22,0.12); border: 1px solid var(--accent); padding: 8px 12px; margin-bottom: 12px; border-radius: 6px; }
+.suggestion-banner .sug-lbl { font-family: var(--mono); font-size: 12px; color: var(--accent-dark, #4d7c0f); font-weight: 600; }
+.suggestion-banner .sug-reason { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); margin-top: 2px; }
 
 .sets-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 .set-row { display: grid; grid-template-columns: 30px 1fr 1fr 60px; gap: 8px; align-items: center; }
@@ -354,58 +358,52 @@ const DEFAULT_PROGRAMS = {
   pectoraux: {
     id: 'pectoraux', name: 'Pecs · Triceps · Biceps', short: 'Jour 1', color: 'red',
     exercises: [
-      { id: 'dc_halteres', name: 'DC haltères', sets: 4, repsRange: '6-8', group: 'Pecs' },
-      { id: 'dc_incline_h', name: 'DC incliné haltères', sets: 4, repsRange: '8', group: 'Pecs' },
-      { id: 'ecarte', name: 'Écarté poulie ou butterfly', sets: 3, repsRange: '12', group: 'Pecs' },
-      { id: 'skull_crusher', name: 'Skull crusher', sets: 3, repsRange: '8', group: 'Triceps' },
-      { id: 'ext_triceps_poulie', name: 'Extension triceps poulie', sets: 4, repsRange: '10', group: 'Triceps' },
-      { id: 'dips', name: 'Dips', sets: 3, repsRange: 'échec', group: 'Triceps' },
-      { id: 'curl_barre', name: 'Curl barre', sets: 4, repsRange: '8', group: 'Biceps' },
-      { id: 'curl_pupitre', name: 'Curl pupitre', sets: 3, repsRange: '10', group: 'Biceps' },
-      { id: 'curl_marteau', name: 'Curl marteau', sets: 3, repsRange: '10', group: 'Biceps' },
-      { id: 'ext_poignets', name: 'Extension poignets', sets: 3, repsRange: '8', group: 'Avant-bras' },
-      { id: 'curl_poignets', name: 'Curl poignets', sets: 4, repsRange: '8', group: 'Avant-bras' },
+      { id: 'dc_halteres', name: 'DC haltères', sets: 4, repsRange: '6-8', group: 'Pecs', type: 'compound' },
+      { id: 'dc_incline_h', name: 'DC incliné haltères', sets: 4, repsRange: '8', group: 'Pecs', type: 'compound' },
+      { id: 'ecarte', name: 'Écarté poulie ou butterfly', sets: 3, repsRange: '12', group: 'Pecs', type: 'isolation' },
+      { id: 'skull_crusher', name: 'Skull crusher', sets: 3, repsRange: '8', group: 'Triceps', type: 'isolation' },
+      { id: 'ext_triceps_poulie', name: 'Extension triceps poulie', sets: 4, repsRange: '10', group: 'Triceps', type: 'isolation' },
+      { id: 'dips', name: 'Dips', sets: 3, repsRange: 'échec', group: 'Triceps', type: 'compound' },
+      { id: 'curl_barre', name: 'Curl barre', sets: 4, repsRange: '8', group: 'Biceps', type: 'isolation' },
+      { id: 'curl_pupitre', name: 'Curl pupitre', sets: 3, repsRange: '10', group: 'Biceps', type: 'isolation' },
+      { id: 'curl_marteau', name: 'Curl marteau', sets: 3, repsRange: '10', group: 'Biceps', type: 'isolation' },
+      { id: 'ext_poignets', name: 'Extension poignets', sets: 3, repsRange: '8', group: 'Avant-bras', type: 'isolation' },
+      { id: 'curl_poignets', name: 'Curl poignets', sets: 4, repsRange: '8', group: 'Avant-bras', type: 'isolation' },
+      { id: 'pallof', name: 'Pallof press', sets: 3, repsRange: '10/côté', group: 'Abdos', type: 'isolation' },
+      { id: 'planche_front', name: 'Planche frontale', sets: 3, repsRange: '45s', group: 'Abdos', type: 'isolation' },
     ]
   },
   dos: {
     id: 'dos', name: 'Dos · Épaules', short: 'Jour 2', color: 'blue',
     exercises: [
-      { id: 'tractions', name: 'Tractions (échauffement)', sets: 4, repsRange: 'max', group: 'Dos' },
-      { id: 'rowing_barre', name: 'Rowing barre', sets: 4, repsRange: '6', group: 'Dos' },
-      { id: 'lat_pulldown', name: 'Lat pulldown', sets: 4, repsRange: '8', group: 'Dos' },
-      { id: 'seated_row_uni', name: 'Seated row unilatéral', sets: 4, repsRange: '10', group: 'Dos' },
-      { id: 'pullover', name: 'Pull-over machine', sets: 3, repsRange: '10', group: 'Dos' },
-      { id: 'dvp_militaire', name: 'Développé militaire libre', sets: 4, repsRange: '6-8', group: 'Épaules' },
-      { id: 'elev_lat', name: 'Élévations latérales', sets: 4, repsRange: '12', group: 'Épaules' },
-      { id: 'face_pull', name: 'Face pull', sets: 3, repsRange: '15', group: 'Épaules' },
-      { id: 'rear_delt', name: 'Rear delt', sets: 3, repsRange: '12', group: 'Épaules' },
+      { id: 'tractions', name: 'Tractions (échauffement)', sets: 4, repsRange: 'max', group: 'Dos', type: 'compound' },
+      { id: 'rowing_barre', name: 'Rowing barre', sets: 4, repsRange: '6', group: 'Dos', type: 'compound' },
+      { id: 'lat_pulldown', name: 'Lat pulldown', sets: 4, repsRange: '8', group: 'Dos', type: 'compound' },
+      { id: 'seated_row_uni', name: 'Seated row unilatéral', sets: 4, repsRange: '10', group: 'Dos', type: 'compound' },
+      { id: 'pullover', name: 'Pull-over machine', sets: 3, repsRange: '10', group: 'Dos', type: 'isolation' },
+      { id: 'dvp_militaire', name: 'Développé militaire libre', sets: 4, repsRange: '6-8', group: 'Épaules', type: 'compound' },
+      { id: 'elev_lat', name: 'Élévations latérales', sets: 4, repsRange: '12', group: 'Épaules', type: 'isolation' },
+      { id: 'face_pull', name: 'Face pull', sets: 3, repsRange: '15', group: 'Épaules', type: 'isolation' },
+      { id: 'rear_delt', name: 'Rear delt', sets: 3, repsRange: '12', group: 'Épaules', type: 'isolation' },
+      { id: 'russian_twists', name: 'Russian twists lestés', sets: 3, repsRange: '15/côté', group: 'Abdos', type: 'isolation' },
+      { id: 'woodchopper', name: 'Cable woodchopper', sets: 3, repsRange: '10/côté', group: 'Abdos', type: 'isolation' },
+      { id: 'planche_lat', name: 'Planche latérale', sets: 3, repsRange: '45s/côté', group: 'Abdos', type: 'isolation' },
     ]
   },
   jambes: {
     id: 'jambes', name: 'Jambes · Fessiers', short: 'Jour 3', color: 'green',
     exercises: [
-      { id: 'squat', name: 'Squat barre', sets: 4, repsRange: '6', group: 'Quadriceps' },
-      { id: 'sdt_roumain', name: 'Soulevé de terre roumain', sets: 4, repsRange: '6', group: 'Postérieur' },
-      { id: 'hip_thrust', name: 'Hip thrust barre libre', sets: 4, repsRange: '8', group: 'Fessiers' },
-      { id: 'presse', name: 'Presse à cuisses', sets: 3, repsRange: '10', group: 'Quadriceps' },
-      { id: 'bulgarian', name: 'Bulgarian squat', sets: 3, repsRange: '8/jambe', group: 'Quadriceps' },
-      { id: 'leg_curl', name: 'Leg curl', sets: 3, repsRange: '12', group: 'Ischios' },
-      { id: 'machine_add', name: 'Machine adducteurs', sets: 4, repsRange: '12-15', group: 'Adducteurs' },
-      { id: 'copenhagen', name: 'Copenhagen plank', sets: 3, repsRange: '30s/côté', group: 'Adducteurs' },
-      { id: 'mollets', name: 'Mollets debout', sets: 4, repsRange: '12', group: 'Mollets' },
-    ]
-  },
-  abdos: {
-    id: 'abdos', name: 'Abdos · Tronc', short: 'Bonus', color: 'yellow',
-    exercises: [
-      { id: 'hanging_legs', name: 'Relevés jambes pendus', sets: 4, repsRange: '8-12', group: 'Abdos bas' },
-      { id: 'ab_wheel', name: 'Ab wheel rollout', sets: 3, repsRange: '8-12', group: 'Anti-extension' },
-      { id: 'crunchs_lestes', name: 'Crunchs lestés', sets: 3, repsRange: '12', group: 'Abdos haut' },
-      { id: 'russian_twists', name: 'Russian twists lestés', sets: 3, repsRange: '15/côté', group: 'Rotation' },
-      { id: 'woodchopper', name: 'Cable woodchopper', sets: 3, repsRange: '10/côté', group: 'Rotation' },
-      { id: 'pallof', name: 'Pallof press', sets: 3, repsRange: '10/côté', group: 'Anti-rotation' },
-      { id: 'planche_front', name: 'Planche frontale', sets: 3, repsRange: '45s', group: 'Gainage' },
-      { id: 'planche_lat', name: 'Planche latérale', sets: 3, repsRange: '45s/côté', group: 'Gainage' },
+      { id: 'squat', name: 'Squat barre', sets: 4, repsRange: '6', group: 'Quadriceps', type: 'compound' },
+      { id: 'sdt_roumain', name: 'Soulevé de terre roumain', sets: 4, repsRange: '6', group: 'Postérieur', type: 'compound' },
+      { id: 'hip_thrust', name: 'Hip thrust barre libre', sets: 4, repsRange: '8', group: 'Fessiers', type: 'compound' },
+      { id: 'presse', name: 'Presse à cuisses', sets: 3, repsRange: '10', group: 'Quadriceps', type: 'compound' },
+      { id: 'bulgarian', name: 'Bulgarian squat', sets: 3, repsRange: '8/jambe', group: 'Quadriceps', type: 'compound' },
+      { id: 'leg_curl', name: 'Leg curl', sets: 3, repsRange: '12', group: 'Ischios', type: 'isolation' },
+      { id: 'machine_add', name: 'Machine adducteurs', sets: 4, repsRange: '12-15', group: 'Adducteurs', type: 'isolation' },
+      { id: 'copenhagen', name: 'Copenhagen plank', sets: 3, repsRange: '30s/côté', group: 'Adducteurs', type: 'isolation' },
+      { id: 'mollets', name: 'Mollets debout', sets: 4, repsRange: '12', group: 'Mollets', type: 'isolation' },
+      { id: 'hanging_legs', name: 'Relevés jambes pendus', sets: 3, repsRange: '8-12', group: 'Abdos', type: 'isolation' },
+      { id: 'ab_wheel', name: 'Ab wheel rollout', sets: 3, repsRange: '8-12', group: 'Abdos', type: 'isolation' },
     ]
   }
 };
@@ -544,16 +542,22 @@ function startSession() {
   state.currentSession = {
     programId: program.id,
     startedAt: new Date().toISOString(),
-    exercises: program.exercises.map(ex => ({
-      exId: ex.id,
-      name: ex.name,
-      sets: ex.sets,
-      repsRange: ex.repsRange,
-      group: ex.group,
-      done: false,
-      data: Array(ex.sets).fill(null).map(() => ({ weight: '', reps: '' })),
-      rpe: null
-    }))
+    exercises: program.exercises.map(ex => {
+      const suggestion = suggestWeight(program.id, ex.id, ex.type, ex.repsRange);
+      const prefillWeight = suggestion ? suggestion.weight : '';
+      return {
+        exId: ex.id,
+        name: ex.name,
+        sets: ex.sets,
+        repsRange: ex.repsRange,
+        group: ex.group,
+        type: ex.type,
+        done: false,
+        suggestion: suggestion,
+        data: Array(ex.sets).fill(null).map(() => ({ weight: prefillWeight, reps: '' })),
+        rpe: null
+      };
+    })
   };
   sessionStartTime = Date.now();
   startElapsedTimer();
@@ -594,6 +598,10 @@ function renderActiveSession() {
           <div class="check-badge">✓</div>
         </div>
         ${renderLastPerf(session.programId, ex.exId)}
+        ${ex.suggestion ? `<div class="suggestion-banner">
+          <div class="sug-lbl">⚡ Charge suggérée · ${ex.suggestion.weight}kg</div>
+          <div class="sug-reason">${ex.suggestion.reason}${ex.suggestion.basedOn > 1 ? ` · moy. ${ex.suggestion.basedOn} séances` : ''}</div>
+        </div>` : ''}
         <div class="set-headers">
           <div>#</div>
           <div>Poids (kg)</div>
@@ -656,6 +664,103 @@ function parseExpectedReps(range) {
   if (!range) return null;
   const m = range.toString().match(/^(\d+)/);
   return m ? parseInt(m[1]) : null;
+}
+
+// ============================================================
+// WEIGHT SUGGESTION ENGINE
+// ============================================================
+// Returns { weight, reason } or null if no history / not weighted
+function suggestWeight(programId, exId, exType, repsRange) {
+  const sessions = state.history[programId] || [];
+  // Collect last 3 sessions that have this exercise with valid weight
+  const recent = [];
+  for (let i = sessions.length - 1; i >= 0 && recent.length < 3; i--) {
+    const ex = sessions[i].exercises.find(e => e.exId === exId);
+    if (ex && ex.sets) {
+      const weighted = ex.sets.filter(s => s.weight !== null && s.weight !== '' && !isNaN(parseFloat(s.weight)));
+      if (weighted.length > 0) {
+        const maxW = Math.max(...weighted.map(s => parseFloat(s.weight)));
+        const avgReps = weighted.reduce((sum, s) => sum + (parseInt(s.reps) || 0), 0) / weighted.length;
+        recent.push({ maxWeight: maxW, avgReps, rpe: ex.rpe });
+      }
+    }
+  }
+
+  if (recent.length === 0) return null; // No history, no suggestion
+
+  // Weighted average of last 2-3 sessions (most recent counts more)
+  let weightSum = 0, weightDenom = 0;
+  const weights = [3, 2, 1]; // recency weighting
+  recent.forEach((r, i) => {
+    weightSum += r.maxWeight * weights[i];
+    weightDenom += weights[i];
+  });
+  const baseWeight = weightSum / weightDenom;
+
+  // Use the most recent session's RPE and reps as primary signal
+  const lastRpe = recent[0].rpe;
+  const lastReps = recent[0].avgReps;
+  const expectedReps = parseExpectedReps(repsRange);
+
+  // Determine increment based on exercise type
+  // Compound: percentage-based (+2.5% to +5%), Isolation: fixed (+1kg)
+  const isCompound = exType === 'compound';
+
+  let suggested = baseWeight;
+  let reason = '';
+
+  if (lastRpe === null || lastRpe === undefined) {
+    // No RPE recorded → keep same weight
+    suggested = baseWeight;
+    reason = 'Même charge (pas de RPE enregistré)';
+  } else if (lastRpe <= 6) {
+    // Too easy → increase more
+    if (isCompound) {
+      suggested = baseWeight * 1.05;
+      reason = 'RPE faible · +5% (c\'était léger)';
+    } else {
+      suggested = baseWeight + 2;
+      reason = 'RPE faible · +2kg (c\'était léger)';
+    }
+  } else if (lastRpe <= 8) {
+    // Optimal zone
+    if (expectedReps && lastReps >= expectedReps) {
+      // Reps target met → progress
+      if (isCompound) {
+        suggested = baseWeight * 1.025;
+        reason = 'RPE optimal · +2,5% (progresse)';
+      } else {
+        suggested = baseWeight + 1;
+        reason = 'RPE optimal · +1kg (progresse)';
+      }
+    } else {
+      // Reps not met → hold
+      suggested = baseWeight;
+      reason = 'Même charge (complète les reps d\'abord)';
+    }
+  } else if (lastRpe === 9) {
+    // Very hard → consolidate
+    suggested = baseWeight;
+    reason = 'RPE élevé · consolide à cette charge';
+  } else {
+    // RPE 10 → maintain or reduce
+    if (expectedReps && lastReps < expectedReps - 2) {
+      suggested = isCompound ? baseWeight * 0.95 : baseWeight - 2;
+      reason = 'RPE max · -léger (reps loin de la cible)';
+    } else {
+      suggested = baseWeight;
+      reason = 'RPE max · maintiens';
+    }
+  }
+
+  // Round to nearest 0.5kg for isolation, nearest 2.5kg for compound (plates reality)
+  if (isCompound) {
+    suggested = Math.round(suggested / 2.5) * 2.5;
+  } else {
+    suggested = Math.round(suggested * 2) / 2;
+  }
+
+  return { weight: suggested, reason, basedOn: recent.length };
 }
 
 function updateSet(exIdx, setIdx, field, value) {
